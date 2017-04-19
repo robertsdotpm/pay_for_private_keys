@@ -45,7 +45,7 @@ contract PayForPrivKey {
 	function refund() public payable
 	{
 		// Expired - allow contract to be destroyed.
-		if(block.number - start_chain_height >= min_blocks * 4 || debug)
+		if(block.number - start_chain_height >= min_blocks * 20 || debug)
 		{
 			if(msg.sender == owner)
 			{
@@ -71,7 +71,7 @@ contract PayForPrivKey {
 	function CommitSolutionHash(bytes32 _solution_hash) public returns (uint)
 	{
 		// Don't allow new submissions after a certain timeout.
-		if(block.number - start_chain_height >= min_blocks * 2 && !debug)
+		if(block.number - start_chain_height >= min_blocks * 10 && !debug)
 		{
 			throw;
 		}
@@ -85,7 +85,7 @@ contract PayForPrivKey {
 	function ProvePrivKey(bytes32 h1, uint8 v1, bytes32 r1, bytes32 s1, bytes32 h2, bytes32 s2, address destination, uint index) public payable returns(address)
 	{
 		// Don't allow new submissions after a certain timeout.
-		if(block.number - start_chain_height >= min_blocks * 2 && !debug)
+		if(block.number - start_chain_height >= min_blocks * 10 && !debug)
 		{
 			throw;
 		}
