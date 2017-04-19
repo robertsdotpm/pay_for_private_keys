@@ -1,13 +1,11 @@
 pragma solidity ^0.4.8;
 
-// Todo:
-// Increase min_blocks to a safe value
-
 contract PayForPrivKey {
 	// Begin config.
-	uint constant min_blocks = 1; //327;
+	uint constant min_blocks = 7;
 	// End config.
 	
+	bool debug = false;
 	address public pub_key;
 	address public owner;
 	uint deposit_amount;
@@ -34,6 +32,28 @@ contract PayForPrivKey {
 	}
 	Solution public solution;
 	
+	uint start_chain_height;
+	
+	function PayForPrivKey(address _pub_key) payable
+	{
+		pub_key = _pub_key;
+		owner = msg.sender; // Not used.
+		deposit_amount = msg.value;
+		start_chain_height = block.number;
+	}
+	
+	function refund() public payable
+	{
+		// Expired - allow contract to be destroyed.
+		if(block.number - start_chain_height >= min_blocks * 4 || debug)
+		{
+			if(msg.sender == owner)
+			{
+				suicide(owner);
+			}
+		}
+	}
+	
 	function get_solution() public returns (bytes32, uint8, bytes32, bytes32, bytes32, bytes32, bool){
 		return (solution.h1, solution.v1, solution.r1, solution.s1, solution.h2, solution.s2, solution.is_valid);
 	}
@@ -48,31 +68,28 @@ contract PayForPrivKey {
 			b[i] = byte(uint8(uint(x) / (2**(8*(19 - i)))));
 	}
     
-    function get_block_height() public constant returns (uint)
-    {
-        return block.number;
-    }
-	
-	function PayForPrivKey(address _pub_key) payable
-	{
-		pub_key = _pub_key;
-		owner = msg.sender; // Not used.
-		deposit_amount = msg.value;
-	}
-	
 	function CommitSolutionHash(bytes32 _solution_hash) public returns (uint)
 	{
-		commit_no = commit_no++;
-		//CommitInfo memory commit_info = CommitInfo(_solution_hash, get_block_height(), true);
-		//commitments.push(commit_info);
-		commitments[commit_no] = CommitInfo(_solution_hash, 0, true);
-	
+		// Don't allow new submissions after a certain timeout.
+		if(block.number - start_chain_height >= min_blocks * 2 && !debug)
+		{
+			throw;
+		}
 		
+		commit_no = commit_no++;
+		commitments[commit_no] = CommitInfo(_solution_hash, block.number, true);
+	
 		return commit_no;
 	}
 	
 	function ProvePrivKey(bytes32 h1, uint8 v1, bytes32 r1, bytes32 s1, bytes32 h2, bytes32 s2, address destination, uint index) public payable returns(address)
 	{
+		// Don't allow new submissions after a certain timeout.
+		if(block.number - start_chain_height >= min_blocks * 2 && !debug)
+		{
+			throw;
+		}
+		
 	    // Check this is a commitment first.
 	    bytes32 solution_hash = sha3(h1, v1, r1, s1, h2, s2, toBytes(destination));	    
 	    if(commitments[index].solution_hash != solution_hash)
@@ -82,7 +99,7 @@ contract PayForPrivKey {
 	    
 	    // Now this is important -- check enough block have passed since the commitment was made.
 	    // This is necessary for security reasons (race conditions from malicious observers)
-	    if(get_block_height() - commitments[index].block_height < min_blocks)
+	    if(block.number - commitments[index].block_height < min_blocks && !debug)
 	    {
 	        throw;
 	    }

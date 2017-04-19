@@ -156,11 +156,23 @@ while generated == False:
 	# Test attack is possible.
 	p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 	try:
-		priv_key, k = derivate_privkey(p, r1, s1, s2, hm1, hm2)
+		temp_priv_key, k = derivate_privkey(p, r1, s1, s2, hm1, hm2)
 	except:
 		continue
-
-	pub_key = hexlify(privtopub(unhexlify(int_to_hex_str(priv_key))))
+		
+	# Test recovered priv key matches up.
+	if temp_priv_key != int(hexlify(priv_key), 16):
+		continue
+	
+	# Test recovered public key matches up.
+	# This should be unnecessary but we'll check anyway.
+	temp_pub_key = int(hexlify(privtopub(priv_key)), 16)
+	if temp_pub_key != pub_key:
+		continue
+		
+	# Save values.
+	priv_key = temp_priv_key
+	pub_key = int_to_hex_str(temp_pub_key)
 	
 	break
 
@@ -192,7 +204,7 @@ print("solution hash = " + solution_hash)
 
 print("Eth input = ")
 
-eth_input = """ "0x%s", %d, "0x%s", "0x%s", "0x%s", "0x%s", "%s", "%s", 0""" % (int_to_hex_str(hm1), v1, int_to_hex_str(r1), int_to_hex_str(s1), int_to_hex_str(hm2), int_to_hex_str(s2), destination, destination)
+eth_input = """ "0x%s", %d, "0x%s", "0x%s", "0x%s", "0x%s", "%s", "%s", 0 <--- replace the zero with the index returned from CommitSolutionHsh""" % (int_to_hex_str(hm1), v1, int_to_hex_str(r1), int_to_hex_str(s1), int_to_hex_str(hm2), int_to_hex_str(s2), destination, destination)
 print(eth_input)
 
 
