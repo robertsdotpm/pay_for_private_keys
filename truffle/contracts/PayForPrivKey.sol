@@ -59,7 +59,7 @@ contract PayForPrivKey {
 	}
 	
 	function get_commit_no() public returns (uint){
-		return commit_no - 1;
+		return commit_no;
 	}
 	
 	function toBytes(address x) returns (bytes b) {
