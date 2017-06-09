@@ -5,7 +5,7 @@ contract PayForPrivKey {
 	uint constant min_blocks = 7;
 	// End config.
 	
-	bool debug = false;
+	bool debug = true;
 	address public pub_key;
 	address public owner;
 	uint deposit_amount;
